@@ -1,0 +1,12 @@
+# Secrets - ne jamais publier
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Fichiers système
+.DS_Store
+Thumbs.db

@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: API SecureDataCorp
+  description: |
+    API REST sécurisée pour l'accès aux données médicales de SecureDataCorp.
+    Authentification par JWT, contrôle d'accès par rôle (RBAC), rate limiting.
+    Toutes les communications sont chiffrées (HTTPS uniquement).
+  version: 1.0.0
+  contact:
+    name: Support technique SecureDataCorp
+    email: support@securedatacorp.local
+
+servers:
+  - url: https://api.securedatacorp.local
+    description: Production
+  - url: http://localhost:5001
+    description: Environnement de test
+
+tags:
+  - name: Authentification
+    description: Connexion et obtention du jeton JWT
+  - name: Données médicales
+    description: Accès aux tables (protégé par rôle)
+
+paths:
+  /login:
+    post:
+      tags: [Authentification]
+      summary: Obtenir un jeton JWT
+      description: Authentifie l'utilisateur et renvoie un jeton valable 1 heure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: dr_martin
+                password:
+                  type: string
+                  format: password
+                  example: medecin123
+      responses:
+        '200':
+          description: Authentification réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  role:
+                    type: string
+                    example: medecin
+        '401':
+          description: Identifiants invalides
+        '429':
+          description: Trop de tentatives (rate limiting)
+
+  /patients:
+    get:
+      tags: [Données médicales]
+      summary: Lister les patients
+      description: Accessible aux rôles ayant le privilège de lecture sur patients.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Liste des patients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '401':
+          description: Jeton manquant ou invalide
+        '403':
+          description: Rôle non autorisé pour cette ressource
+
+  /dossiers:
+    get:
+      tags: [Données médicales]
+      summary: Lister les dossiers médicaux
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dossiers médicaux
+        '401':
+          description: Jeton manquant ou invalide
+        '403':
+          description: Rôle non autorisé
+
+  /facturation:
+    get:
+      tags: [Données médicales]
+      summary: Lister la facturation
+      description: Réservé au personnel administratif et à l'analyste.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Données de facturation
+        '401':
+          description: Jeton manquant ou invalide
+        '403':
+          description: Rôle non autorisé (ex. un médecin est refusé ici)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Inclure le jeton dans l'en-tête : Authorization: Bearer <token>"
+
+  schemas:
+    Patient:
+      type: object
+      properties:
+        patient_id:
+          type: integer
+          example: 42
+        nom:
+          type: string
+          example: Dupont
+        prenom:
+          type: string
+          example: Jean
+        date_naissance:
+          type: string
+          format: date
+          example: "1985-07-23"
+        num_secu:
+          type: string
+          description: Numéro de Sécurité sociale (15 chiffres) - donnée sensible
+          example: "185072312345678"
+    Erreur:
+      type: object
+      properties:
+        erreur:
+          type: string
+          example: "Accès refusé : le rôle 'medecin' n'a pas accès à 'facturation'"

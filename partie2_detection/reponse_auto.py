@@ -112,9 +112,15 @@ def _envoyer_email(sujet, corps):
 
 
 def notifier(severite, message):
-    """Envoie une vraie notification si un canal est configuré, sinon simule."""
+    """Envoie une vraie notification DÉTAILLÉE si un canal est configuré, sinon simule."""
     canaux = SEVERITES[severite]["canaux"]
-    texte = f"[{severite}] SecureDataCorp — {message}"
+    # Icône couleur selon la sévérité : repère visuel immédiat dans Discord
+    icones = {"CRITIQUE": "🔴", "ÉLEVÉ": "🟠", "MOYEN": "🟡", "FAIBLE": "⚪"}
+    horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M:%S")
+    # Message structuré : sévérité + détails de l'incident + horodatage
+    texte = (f"{icones.get(severite, '')} **[{severite}] SecureDataCorp**\n"
+             f"{message}\n"
+             f"🕐 Détecté le {horodatage}")
     envois = []
 
     # Envoi réel si configuré
@@ -155,10 +161,22 @@ def workflow_force_brute(ip, nb_echecs):
     """Workflow 1 : réponse graduée aux tentatives de force brute."""
     echecs_par_ip[ip] = nb_echecs
     if nb_echecs > 20:
-        action = bloquer_ip(ip, 24) + " + " + notifier("CRITIQUE", "force brute massive")
+        blocage = bloquer_ip(ip, 24)
+        msg = (f"**Force brute massive détectée**\n"
+               f"• Type : tentatives de connexion répétées\n"
+               f"• Source : IP {ip}\n"
+               f"• Volume : {nb_echecs} échecs de connexion\n"
+               f"• Action : {blocage}")
+        action = blocage + " + " + notifier("CRITIQUE", msg)
         journaliser("CRITIQUE", "Force brute", f"{nb_echecs} échecs depuis {ip}", action)
     elif nb_echecs > 10:
-        action = bloquer_ip(ip, 24) + " + " + notifier("ÉLEVÉ", "force brute")
+        blocage = bloquer_ip(ip, 24)
+        msg = (f"**Force brute détectée**\n"
+               f"• Type : tentatives de connexion répétées\n"
+               f"• Source : IP {ip}\n"
+               f"• Volume : {nb_echecs} échecs de connexion\n"
+               f"• Action : {blocage}")
+        action = blocage + " + " + notifier("ÉLEVÉ", msg)
         journaliser("ÉLEVÉ", "Force brute", f"{nb_echecs} échecs depuis {ip}", action)
     elif nb_echecs > 5:
         action = bloquer_ip(ip, 1)
@@ -169,7 +187,12 @@ def workflow_injection_sql(ip, utilisateur, requete):
     """Workflow 2 : réponse immédiate à une tentative d'injection SQL."""
     a1 = bloquer_ip(ip, 24)
     a2 = isoler_compte(utilisateur)
-    a3 = notifier("CRITIQUE", "injection SQL détectée")
+    msg = (f"**Injection SQL détectée**\n"
+           f"• Type : injection SQL (contournement d'authentification)\n"
+           f"• Source : IP {ip}, compte « {utilisateur} »\n"
+           f"• Requête suspecte : `{requete[:70]}`\n"
+           f"• Action : IP bloquée 24h, compte isolé, sauvegarde d'urgence")
+    a3 = notifier("CRITIQUE", msg)
     action = f"{a1} + {a2} + {a3} + sauvegarde d'urgence déclenchée"
     journaliser("CRITIQUE", "Injection SQL", f"{requete[:40]}... depuis {ip}", action)
 
@@ -177,17 +200,30 @@ def workflow_injection_sql(ip, utilisateur, requete):
 def workflow_pic_requetes(ip, nb_requetes):
     """Workflow 4 : réaction à un pic anormal de requêtes (anti-DDoS)."""
     if nb_requetes > 1000:
-        action = f"rate limiting agressif activé sur {ip} + " + notifier("ÉLEVÉ", "pic de requêtes")
+        msg = (f"**Pic anormal de requêtes (possible DDoS)**\n"
+               f"• Type : volume de requêtes anormalement élevé\n"
+               f"• Source : IP {ip}\n"
+               f"• Volume : {nb_requetes} requêtes/minute\n"
+               f"• Action : rate limiting agressif activé")
+        action = f"rate limiting agressif activé sur {ip} + " + notifier("ÉLEVÉ", msg)
         journaliser("ÉLEVÉ", "Pic de requêtes", f"{nb_requetes} req/min depuis {ip}", action)
 
 
 def workflow_espace_disque(pct_libre):
     """Workflow 3 : réaction au manque d'espace disque."""
     if pct_libre < 10:
-        action = "nettoyage auto (logs + temp) + " + notifier("CRITIQUE", "disque critique")
+        msg = (f"**Espace disque critique**\n"
+               f"• Composant : serveur de base de données\n"
+               f"• État : {pct_libre}% d'espace libre restant\n"
+               f"• Action : nettoyage auto des logs et fichiers temporaires")
+        action = "nettoyage auto (logs + temp) + " + notifier("CRITIQUE", msg)
         journaliser("CRITIQUE", "Espace disque", f"{pct_libre}% libre", action)
     elif pct_libre < 20:
-        action = "nettoyage auto des vieux logs + " + notifier("MOYEN", "disque faible")
+        msg = (f"**Espace disque faible**\n"
+               f"• Composant : serveur de base de données\n"
+               f"• État : {pct_libre}% d'espace libre restant\n"
+               f"• Action : nettoyage auto des vieux logs")
+        action = "nettoyage auto des vieux logs + " + notifier("MOYEN", msg)
         journaliser("MOYEN", "Espace disque", f"{pct_libre}% libre", action)
 
 

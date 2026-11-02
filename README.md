@@ -1,4 +1,4 @@
-#  Projet SecureDataCorp — Sécurisation et restauration d'un SI
+# Projet SecureDataCorp — Sécurisation et restauration d'un SI
 
 > Projet de rentrée **ESIS-1** — **FENZI Melissa**
 
@@ -8,7 +8,7 @@ Le projet applique une logique de **défense en profondeur** à travers les 6 pa
 
 ---
 
-##  Structure du dépôt
+## Structure du dépôt
 
 ```
 SecureDataCorp/
@@ -34,7 +34,7 @@ SecureDataCorp/
 
 ---
 
-##  Technologies utilisées
+## Technologies utilisées
 
 | Domaine | Outils |
 |---|---|
@@ -48,48 +48,69 @@ SecureDataCorp/
 
 ---
 
-##  Prérequis et installation
+## Installation & lancement (de A à Z)
 
+> Le dépôt ne contient que le **code**. Pour le faire tourner, on reconstruit
+> l'environnement autour des fichiers. La logique est une **chaîne** :
+> **base de données → secrets → exécution**.
+> La base MySQL est fournie par Docker (port 3307), les scripts SQL créent les
+> tables et les droits, le fichier `.env` injecte les secrets, et les scripts
+> Python se connectent à cette base.
+
+### Prérequis
+- **Docker** (pour la base MySQL)
+- **Python 3** et **pip**
+- **Git**
+
+### Étape 1 — Récupérer le projet
 ```bash
-# Bibliothèques Python nécessaires
-pip install pandas scikit-learn faker flask pyjwt
+git clone https://github.com/fenMel/SecureDataCorp.git
+cd SecureDataCorp
+```
+
+### Étape 2 — Lancer la base de données MySQL (Docker)
+```bash
+docker run --name medicaldb \
+  -e MYSQL_ROOT_PASSWORD=SecureData2026! \
+  -p 3307:3306 -d mysql:8.0
+```
+`-p 3307:3306` expose le port interne 3306 du conteneur sur le port **3307** de
+la machine : c'est par là que les scripts Python se connecteront
+(`127.0.0.1:3307`).
+
+### Étape 3 — Charger la structure de la base (scripts SQL)
+```bash
+docker exec -i medicaldb mysql -uroot -pSecureData2026! < partie1_donnees/01_creation_base.sql
+docker exec -i medicaldb mysql -uroot -pSecureData2026! < partie1_donnees/02_rbac.sql
+```
+`docker exec -i ... < fichier.sql` injecte le contenu du script dans le MySQL du
+conteneur : création des quatre tables, des contraintes d'intégrité et des rôles RBAC.
+
+### Étape 4 — Installer les bibliothèques Python
+```bash
+pip install pandas scikit-learn faker flask pyjwt python-dotenv
+```
+
+### Étape 5 — Configurer les secrets (variables d'environnement)
+```bash
+cp .env.example .env     # puis éditer .env et renseigner ses valeurs
+```
+Les scripts lisent ces variables avec `os.getenv(...)` et ne contiennent donc
+**aucun secret en clair**. Sans `.env`, les scripts tournent quand même (mode
+simulation / clé par défaut).
+
+### Étape 6 — Exécuter les scripts
+```bash
+python partie2_detection/analyse_logs.py       # analyse des logs (règles + IA)
+python partie2_detection/reponse_auto.py        # réponse automatisée aux incidents
+python partie3_rgpd/anonymisation.py            # anonymisation RGPD (3 niveaux)
+python partie5_api/api_securisee.py             # démarre l'API sur http://localhost:5001
+python partie6_monitoring/detection_ia_avancee.py   # détection IA (3 modèles)
 ```
 
 ---
 
-##  Utilisation des scripts
-
-### Partie 1 — Base de données
-```bash
-# Création de la base dans le conteneur MySQL
-docker exec -i medicaldb mysql -uroot -p < partie1_donnees/01_creation_base.sql
-docker exec -i medicaldb mysql -uroot -p < partie1_donnees/02_rbac.sql
-```
-
-### Partie 2 — Détection et réponse
-```bash
-python partie2_detection/analyse_logs.py      # analyse des logs (règles + IA)
-python partie2_detection/reponse_auto.py       # réponse automatisée aux incidents
-```
-
-### Partie 3 — Anonymisation RGPD
-```bash
-python partie3_rgpd/anonymisation.py
-```
-
-### Partie 5 — API sécurisée
-```bash
-python partie5_api/api_securisee.py            # démarre l'API sur http://localhost:5001
-```
-
-### Partie 6 — IA avancée
-```bash
-python partie6_monitoring/detection_ia_avancee.py
-```
-
----
-
-##  Les 6 parties du projet
+## Les 6 parties du projet
 
 1. **Sécurisation des données** — base, chiffrement/RBAC, sauvegarde/DRP, pare-feu
 2. **Détection des anomalies** — analyse de logs, réponse automatisée, IDS Suricata
@@ -100,7 +121,7 @@ python partie6_monitoring/detection_ia_avancee.py
 
 ---
 
-##  Avertissement
+## Avertissement
 
 Les mots de passe présents dans les scripts sont des **exemples de démonstration**.
 En production, ils seraient gérés via des variables d'environnement ou un coffre-fort de secrets.

@@ -116,11 +116,9 @@ def notifier(severite, message):
     canaux = SEVERITES[severite]["canaux"]
     # Icône couleur selon la sévérité : repère visuel immédiat dans Discord
     icones = {"CRITIQUE": "🔴", "ÉLEVÉ": "🟠", "MOYEN": "🟡", "FAIBLE": "⚪"}
-    horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M:%S")
-    # Message structuré : sévérité + détails de l'incident + horodatage
+    # Message structuré : sévérité + détails de l'incident
     texte = (f"{icones.get(severite, '')} **[{severite}] SecureDataCorp**\n"
-             f"{message}\n"
-             f"🕐 Détecté le {horodatage}")
+             f"{message}")
     envois = []
 
     # Envoi réel si configuré

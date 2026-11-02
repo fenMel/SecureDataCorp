@@ -57,7 +57,9 @@ DROITS = {
 # Rate limiting simple : on compte les requêtes par IP
 # ---------------------------------------------------------------------
 REQUETES = {}             # { ip : [timestamps...] }
-LIMITE = 5                # 5 requêtes max
+# Limite configurable via la variable d'environnement API_RATE_LIMIT
+# (5 par défaut ; on peut la relever pour les tests complets par rôle).
+LIMITE = int(os.getenv("API_RATE_LIMIT", "5"))   # requêtes max
 FENETRE = 60              # par 60 secondes
 
 def rate_limite(ip):

@@ -80,8 +80,11 @@ def journaliser(severite, type_evt, detail, action):
 def _envoyer_webhook(url, texte):
     """Envoie un message à un webhook Discord ou Slack (POST JSON)."""
     data = json.dumps({"content": texte, "text": texte}).encode("utf-8")
+    # Discord (Cloudflare) refuse les requêtes sans User-Agent (erreur 403) :
+    # on fournit donc une identité d'application explicite.
     req = urllib.request.Request(url, data=data,
-                                 headers={"Content-Type": "application/json"})
+                                 headers={"Content-Type": "application/json",
+                                          "User-Agent": "SecureDataCorp-Bot/1.0"})
     try:
         urllib.request.urlopen(req, timeout=5)
         return True

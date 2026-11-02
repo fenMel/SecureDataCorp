@@ -1,4 +1,4 @@
-# 🔐 Projet SecureDataCorp — Sécurisation et restauration d'un SI
+#  Projet SecureDataCorp — Sécurisation et restauration d'un SI
 
 > Projet de rentrée **ESIS-1** — **FENZI Melissa**
 
@@ -8,7 +8,7 @@ Le projet applique une logique de **défense en profondeur** à travers les 6 pa
 
 ---
 
-## 📂 Structure du dépôt
+##  Structure du dépôt
 
 ```
 SecureDataCorp/
@@ -34,7 +34,7 @@ SecureDataCorp/
 
 ---
 
-## 🛠️ Technologies utilisées
+##  Technologies utilisées
 
 | Domaine | Outils |
 |---|---|
@@ -48,7 +48,7 @@ SecureDataCorp/
 
 ---
 
-## 🚀 Prérequis et installation
+##  Prérequis et installation
 
 ```bash
 # Bibliothèques Python nécessaires
@@ -57,7 +57,7 @@ pip install pandas scikit-learn faker flask pyjwt
 
 ---
 
-## ▶️ Utilisation des scripts
+##  Utilisation des scripts
 
 ### Partie 1 — Base de données
 ```bash
@@ -89,7 +89,7 @@ python partie6_monitoring/detection_ia_avancee.py
 
 ---
 
-## 🧩 Les 6 parties du projet
+##  Les 6 parties du projet
 
 1. **Sécurisation des données** — base, chiffrement/RBAC, sauvegarde/DRP, pare-feu
 2. **Détection des anomalies** — analyse de logs, réponse automatisée, IDS Suricata
@@ -100,7 +100,7 @@ python partie6_monitoring/detection_ia_avancee.py
 
 ---
 
-## ⚠️ Avertissement
+##  Avertissement
 
 Les mots de passe présents dans les scripts sont des **exemples de démonstration**.
 En production, ils seraient gérés via des variables d'environnement ou un coffre-fort de secrets.
